@@ -1,0 +1,8 @@
+---
+- name: Wait until Jira container is healthy
+  ansible.builtin.command: "docker inspect --format={{ '{{.State.Health.Status}}' }} {{ jira_container_name }}"
+  register: jira_health_status
+  changed_when: false
+  until: jira_health_status.stdout == "healthy"
+  retries: "{{ jira_health_retries }}"
+  delay: "{{ jira_health_delay }}"

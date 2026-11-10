@@ -1,0 +1,17 @@
+---
+- name: Setup confluence Service
+  ansible.builtin.import_tasks: confluence-setup.yml
+  tags:
+    - setup_confluence
+
+- name: Wait for Confluence to become healthy
+  ansible.builtin.import_tasks: confluence-wait.yml
+  tags:
+    - wait_confluence
+
+- name: Set cronjob for Confluence backup sync
+  ansible.builtin.import_tasks: confluence-backup-sync.yml
+  when: confluence_remote_backup_enabled | bool
+  tags:
+    - backup
+    - cron

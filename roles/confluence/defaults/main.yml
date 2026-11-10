@@ -1,0 +1,51 @@
+---
+# defaults file for confluence_setup
+confluence_domain: conf.com
+confluence_subdomain: doc
+confluence_project_dir: /opt/services
+confluence_service_dir: "{{ confluence_project_dir }}/confluence"
+confluence_restart_policy: unless-stopped
+confluence_image_tag: "9.3.1-jdk17"
+confluence_postgres_image_tag: "16-alpine"
+confluence_hostname: "{{ confluence_subdomain }}"
+confluence_data_path: /var/atlassian/application-data/confluence
+confluence_postgres_backups_path: /backups/confluence-postgres
+confluence_data_backups_path: /backups/confluence-data
+confluence_backup_init_sleep: 90s
+confluence_backup_interval: 86400
+confluence_postgres_backup_prune_days: 7
+confluence_data_backup_prune_days: 7
+confluence_postgres_backup_name: confluence-postgres
+confluence_data_backup_name: confluence-data
+confluence_compose_project_name: "{{ confluence_service_dir | basename }}"
+
+confluence_remote_backup_enabled: false
+confluence_remote_backup_user: backup
+confluence_remote_backup_host: ""
+confluence_remote_backup_port: 22
+confluence_remote_backup_path: /backups/confluence
+confluence_remote_backup_identity_file: /root/.ssh/id_ed25519
+confluence_remote_backup_strict_host_key_checking: true
+confluence_remote_backup_known_hosts: []
+confluence_remote_backup_script_path: "{{ confluence_service_dir }}/confluence-backup-sync.sh"
+confluence_remote_backup_log_path: /var/log/confluence-backup-sync.log
+confluence_remote_backup_cron_file: confluence_backup_sync
+confluence_remote_backup_cron_minute: "47"
+confluence_remote_backup_cron_hour: "04"
+confluence_remote_backup_cron_day: "*"
+confluence_remote_backup_cron_month: "*"
+confluence_remote_backup_cron_weekday: "*"
+
+confluence_container_name: "{{ confluence_hostname }}"
+confluence_health_retries: 30
+confluence_health_delay: 10
+confluence_jvm_minimum_memory: "2048m"
+confluence_jvm_maximum_memory: "3062m"
+
+confluence_service_subdirs: []
+
+confluence_postgres_hostname: postgressql-jira
+
+confluence_db_name: test-name
+confluence_db_user: test-user
+confluence_db_password: test-pass

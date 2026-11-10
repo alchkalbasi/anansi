@@ -1,0 +1,7 @@
+---
+- name: Validate server setup syntax
+  hosts: localhost
+  gather_facts: true
+  become: true
+  roles:
+    - setup/server-setup

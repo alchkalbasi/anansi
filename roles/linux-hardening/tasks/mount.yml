@@ -1,0 +1,63 @@
+---
+- name: Find existing mount metadata
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - --json
+      - --mountpoint
+      - "{{ linux_hardening_mount.value.path }}"
+      - --output
+      - SOURCE,FSTYPE
+  register: linux_hardening_mount_info
+  changed_when: false
+  failed_when: linux_hardening_mount_info.rc not in [0, 1]
+  check_mode: false
+  when: linux_hardening_mount.value.enabled is sameas true
+  tags:
+    - linux-hardening
+    - linux-hardening-linux
+
+- name: Refuse to create a mount entry for an ordinary directory
+  ansible.builtin.assert:
+    that:
+      - linux_hardening_mount_info.rc == 0
+      - linux_hardening_mount_info.stdout | length > 0
+    fail_msg: >-
+      {{ linux_hardening_mount.value.path }} is not an existing mountpoint. Disable its mount control or
+      provision a dedicated filesystem before enabling mount options; directory permissions are independent.
+  when: linux_hardening_mount.value.enabled is sameas true
+  tags:
+    - linux-hardening
+    - linux-hardening-linux
+
+- name: Set mount options on existing mount
+  ansible.posix.mount:
+    path: "{{ linux_hardening_mount.value.path }}"
+    src: >-
+      {{ linux_hardening_mount.value.src | default((linux_hardening_mount_info.stdout |
+
+      from_json).filesystems[0].source, true) }}
+    fstype: >-
+      {{ linux_hardening_mount.value.fstype | default((linux_hardening_mount_info.stdout |
+
+      from_json).filesystems[0].fstype, true) }}
+    opts: "{{ linux_hardening_mount.value.opts }}"
+    dump: "{{ linux_hardening_mount.value.dump }}"
+    passno: "{{ linux_hardening_mount.value.passno }}"
+    state: mounted
+  when: linux_hardening_mount.value.enabled is sameas true
+  tags:
+    - linux-hardening
+    - linux-hardening-linux
+
+- name: Apply independently enabled mountpoint permissions
+  ansible.builtin.file:
+    path: "{{ linux_hardening_mount.value.path }}"
+    mode: "{{ linux_hardening_mount.value.mode }}"
+    owner: "{{ linux_hardening_mount.value.owner }}"
+    group: "{{ linux_hardening_mount.value.group }}"
+    state: directory
+  when: linux_hardening_mount.value.permissions_enabled is sameas true
+  tags:
+    - linux-hardening
+    - linux-hardening-linux

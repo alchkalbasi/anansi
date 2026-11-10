@@ -1,0 +1,15 @@
+---
+- name: Server setup restart time synchronization
+  ansible.builtin.systemd_service:
+    name: systemd-timesyncd
+    state: restarted
+
+- name: Server setup restart journal
+  ansible.builtin.systemd_service:
+    name: systemd-journald
+    state: restarted
+  notify: Server setup flush journal
+
+- name: Server setup flush journal
+  ansible.builtin.command: journalctl --flush
+  changed_when: true

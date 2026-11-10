@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  role_name: server_setup
+  author: Ali Kalbasi
+  description: Readable Debian and Ubuntu server provisioning before Linux hardening
+  license: MIT
+  min_ansible_version: '2.19'
+  platforms:
+    - name: Debian
+      versions: [bookworm, trixie]
+    - name: Ubuntu
+      versions: [jammy, noble]
+dependencies: []

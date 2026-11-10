@@ -1,0 +1,8 @@
+---
+- name: Wait until confluence container is healthy
+  ansible.builtin.shell: "docker inspect --format='{{ '{{.State.Health.Status}}' }}' {{ confluence_container_name }}"
+  register: confluence_status
+  changed_when: false
+  until: confluence_status.stdout == "healthy"
+  retries: "{{ confluence_health_retries }}"
+  delay: "{{ confluence_health_delay }}"
