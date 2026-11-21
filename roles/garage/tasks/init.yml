@@ -1,0 +1,129 @@
+---
+# wait for daemon
+- name: Wait for Garage to answer
+  community.docker.docker_container_exec:
+    container: "{{ garage_container_name }}"
+    argv: [/garage, status]
+  register: _garage_status
+  until: _garage_status.rc == 0
+  retries: 15
+  delay: 4
+  changed_when: false
+
+# cluster layout (only if this node has no role yet)
+- name: Assign and apply layout for this node
+  when: "'NO ROLE ASSIGNED' in _garage_status.stdout"
+  block:
+    - name: Extract node ID
+      ansible.builtin.set_fact:
+        _garage_node_id: >-
+          {{ (_garage_status.stdout_lines
+              | select('search', 'NO ROLE ASSIGNED') | first).split() | first }}
+
+    - name: Read current layout version
+      community.docker.docker_container_exec:
+        container: "{{ garage_container_name }}"
+        argv: [/garage, layout, show]
+      register: _garage_layout
+      changed_when: false
+
+    - name: Assign layout role to node
+      community.docker.docker_container_exec:
+        container: "{{ garage_container_name }}"
+        argv:
+          - /garage
+          - layout
+          - assign
+          - -z
+          - "{{ garage_layout_zone }}"
+          - -c
+          - "{{ garage_layout_capacity }}"
+          - "{{ _garage_node_id }}"
+
+    - name: Apply layout
+      community.docker.docker_container_exec:
+        container: "{{ garage_container_name }}"
+        argv:
+          - /garage
+          - layout
+          - apply
+          - --version
+          - "{{ (_garage_layout.stdout | regex_search('version:\\s*(\\d+)', '\\1', ignorecase=true) | default(['0'], true) | first | int) + 1 }}"
+
+# buckets
+- name: Check existing buckets
+  community.docker.docker_container_exec:
+    container: "{{ garage_container_name }}"
+    argv: [/garage, bucket, info, "{{ item }}"]
+  loop: "{{ garage_buckets }}"
+  register: _garage_bucket_info
+  failed_when: false
+  changed_when: false
+  tags:
+    - buckets
+
+- name: Create missing buckets
+  community.docker.docker_container_exec:
+    container: "{{ garage_container_name }}"
+    argv: [/garage, bucket, create, "{{ item.item }}"]
+  loop: "{{ _garage_bucket_info.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.rc != 0
+  tags:
+    - buckets
+
+# access keys
+- name: Check existing keys
+  community.docker.docker_container_exec:
+    container: "{{ garage_container_name }}"
+    argv: [/garage, key, info, "{{ item.name }}"]
+  loop: "{{ garage_keys }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: _garage_key_info
+  failed_when: false
+  changed_when: false
+  tags:
+    - keys
+
+- name: Create missing keys
+  community.docker.docker_container_exec:
+    container: "{{ garage_container_name }}"
+    argv: [/garage, key, create, "{{ item.item.name }}"]
+  loop: "{{ _garage_key_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.rc != 0
+  register: _garage_key_create
+  no_log: true
+  tags:
+    - keys
+
+# The secret is only printed once at creation time, so persist it on the host
+- name: Save credentials of newly created keys
+  ansible.builtin.copy:
+    dest: "{{ service_dir }}/secrets/keys/{{ item.item.item.name }}.txt"
+    content: "{{ item.stdout }}\n"
+    mode: "0600"
+  loop: "{{ _garage_key_create.results }}"
+  loop_control:
+    label: "{{ item.item.item.name }}"
+  when: item is changed  # noqa: no-handler
+  no_log: true
+  tags:
+    - keys
+
+- name: Grant bucket permissions to keys
+  community.docker.docker_container_exec:
+    container: "{{ garage_container_name }}"
+    argv: >-
+      {{ ['/garage', 'bucket', 'allow']
+         + (item.1.permissions | default(['read', 'write']) | map('regex_replace', '^', '--') | list)
+         + [item.1.name, '--key', item.0.name] }}
+  loop: "{{ garage_keys | subelements('buckets', skip_missing=true) }}"
+  loop_control:
+    label: "{{ item.0.name }} -> {{ item.1.name }} {{ item.1.permissions | default(['read', 'write']) }}"
+  changed_when: false # re-granting is a no-op on the server side
+  tags:
+    - keys

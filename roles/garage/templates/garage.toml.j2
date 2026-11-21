@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+metadata_dir = "{{ garage_container_meta_dir }}"
+data_dir = "{{ garage_container_data_dir }}"
+db_engine = "{{ garage_db_engine }}"
+metadata_auto_snapshot_interval = "{{ garage_metadata_auto_snapshot_interval }}"
+
+replication_factor = {{ garage_replication_factor }}
+consistency_mode = "{{ garage_consistency_mode }}"
+compression_level = {{ garage_compression_level }}
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "{{ garage_rpc_public_addr }}"
+rpc_secret_file = "{{ garage_container_secrets_dir }}/rpc_secret"
+
+[s3_api]
+s3_region = "{{ garage_s3_region }}"
+api_bind_addr = "[::]:3900"
+root_domain = "{{ garage_s3_root_domain }}"
+
+[s3_web]
+bind_addr = "[::]:3902"
+root_domain = "{{ garage_web_root_domain }}"
+index = "{{ garage_web_index }}"
+
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token_file = "{{ garage_container_secrets_dir }}/admin_token"
+metrics_token_file = "{{ garage_container_secrets_dir }}/metrics_token"

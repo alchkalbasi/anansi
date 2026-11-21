@@ -1,0 +1,25 @@
+- name: Create docker external networks with name
+  community.docker.docker_network:
+    name: "{{ item }}"
+    driver_options:
+      com.docker.network.bridge.name: "{{ item }}"
+  loop: "{{ docker_networks }}"
+  tags:
+    - docker-networks
+
+- name: Pull images for project
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ service_dir }}"
+    policy: missing # pull only if the image doesn't exist locally
+  tags:
+    - pull
+
+- name: Deploy Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ service_dir }}"
+  tags:
+    - deploy
+
+# Apply pending config/secret changes now, so init talks to the updated daemon
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

@@ -1,0 +1,64 @@
+# Explicit secrets always win; otherwise a random one is written only if the file
+# does not exist yet (force: false), so it stays stable across runs.
+- name: Write Garage secret files
+  ansible.builtin.copy:
+    dest: "{{ service_dir }}/secrets/{{ item.name }}"
+    content: >-
+      {{ item.value if item.value | length > 0
+         else lookup('ansible.builtin.password', '/dev/null', chars=['digits', 'abcdef'], length=64) }}
+    force: "{{ item.value | length > 0 }}"
+    mode: "0600"
+  loop: "{{ garage_secret_files }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+  notify: "restart garage"
+  tags:
+    - secrets
+
+- name: Require auth for a Web UI that is not bound to localhost
+  ansible.builtin.assert:
+    that: garage_webui_auth_user_pass | length > 0
+    fail_msg: >-
+      garage_webui_auth_user_pass is empty but the Web UI binds to {{ garage_webui_bind_host }}.
+      Generate one with: htpasswd -nbBC 10 admin '<password>'
+  when:
+    - garage_webui_enabled
+    - garage_webui_bind_host != '127.0.0.1'
+  tags:
+    - env-file
+
+# The Web UI needs the admin token, which may have been auto-generated on the host
+- name: Read the admin token for the Web UI
+  ansible.builtin.slurp:
+    src: "{{ service_dir }}/secrets/admin_token"
+  register: _garage_admin_token_file
+  when: garage_webui_enabled
+  no_log: true
+  tags:
+    - env-file
+
+- name: Expose the admin token to the .env template
+  ansible.builtin.set_fact:
+    _garage_admin_token: "{{ _garage_admin_token_file.content | b64decode | trim }}"
+  when: garage_webui_enabled
+  no_log: true
+  tags:
+    - env-file
+
+- name: Template the .env file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ service_dir }}/.env"
+    mode: "0600"
+  tags:
+    - env-file
+
+- name: Template garage.toml
+  ansible.builtin.template:
+    src: garage.toml.j2
+    dest: "{{ service_dir }}/garage.toml"
+    mode: "0644"
+  notify: "restart garage"
+  tags:
+    - garage-conf

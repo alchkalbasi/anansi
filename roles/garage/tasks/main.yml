@@ -1,0 +1,47 @@
+---
+# tasks file for garage
+
+- name: Check if Docker CE and Compose Plugin are installed
+  ansible.builtin.command: "{{ item }}"
+  register: docker_install_check
+  ignore_errors: true
+  changed_when: false
+  loop:
+    - "docker --version"
+    - "docker compose version"
+  tags:
+    - check-docker
+
+- name: Fail if Docker CE is missing
+  ansible.builtin.fail:
+    msg: "CRITICAL: Docker (docker-ce) is not installed on this host. Please install it before running this playbook."
+  when: docker_install_check.results[0].rc != 0
+  tags:
+    - check-docker
+
+- name: Fail if Docker Compose is missing
+  ansible.builtin.fail:
+    msg: "CRITICAL: Docker Compose Plugin is missing. Run 'sudo apt install docker-compose-plugin' to fix."
+  when: docker_install_check.results[1].rc != 0
+  tags:
+    - check-docker
+
+- name: Preparation
+  ansible.builtin.include_tasks: prepare.yml
+  tags:
+    - prepare
+
+- name: Configuration
+  ansible.builtin.include_tasks: configure.yml
+  tags:
+    - configure
+
+- name: Deploy
+  ansible.builtin.include_tasks: deploy.yml
+  tags:
+    - deploy
+
+- name: Initialize cluster layout, buckets and keys
+  ansible.builtin.include_tasks: init.yml
+  tags:
+    - initialize

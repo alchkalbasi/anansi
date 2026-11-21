@@ -1,0 +1,17 @@
+---
+# vars file for garage
+
+# Paths inside the container
+garage_container_config: /etc/garage.toml
+garage_container_meta_dir: /var/lib/garage/meta
+garage_container_data_dir: /var/lib/garage/data
+garage_container_secrets_dir: /etc/garage/secrets
+
+# Secret files (host side)
+garage_secret_files:
+  - name: rpc_secret
+    value: "{{ garage_rpc_secret }}"
+  - name: admin_token
+    value: "{{ garage_admin_token }}"
+  - name: metrics_token
+    value: "{{ garage_metrics_token }}"
