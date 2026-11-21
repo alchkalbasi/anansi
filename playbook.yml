@@ -1,122 +1,119 @@
-# - name: Deploy RustFS
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - rustFS
-#   tags:
-#     - rustfs
-
-# - name: Deploy InfluxDB
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - observability/influxDB
-#   tags:
-#     - influxdb
-#     - observability
-
-# - name: Deploy Telegraf
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - observability/telegraf-docker
-#   tags:
-#     - telegraf-docker
-#     - observability
-
-# - name: Deploy GitLab
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - gitlab/gitlab-omnibus
-#   tags:
-#     - gitlab
-#     - omnibus
-
-# - name: Deploy GitLab Runner
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - gitlab/gitlab-runner
-#   tags:
-#     - gitlab
-#     - runner
-
-# - name: Deploy Jitsi
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - jitsi
-#   tags:
-#     - jitsi
-# - name: Deploy Confluence
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - confluence
-#   tags:
-#     - confluence
-
-# - name: Deploy Jira
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - jira
-#   tags:
-#     - jira
-
-# - name: Setup System Role
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - setup/system-setup
-#   tags:
-#     - system-setup
-
-# - name: Install and configure kubectl
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - kubectl
-#   tags:
-#     - kubectl
-
-# - name: Install and configure kind
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - kind
-#   tags:
-#     - kind
-
-# - name: Install and configure minikube
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - minikube
-#   tags:
-#     - minikube
-
-# - name: Install, configure, and create k3d cluster
-#   hosts: localhost
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - k3d
-#   tags:
-#     - k3d
+- name: Deploy Garage
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - garage
+  tags:
+    - garage
+- name: Deploy RustFS
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - rustFS
+  tags:
+    - rustfs
+- name: Deploy InfluxDB
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - observability/influxDB
+  tags:
+    - influxdb
+    - observability
+- name: Deploy Telegraf
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - observability/telegraf-docker
+  tags:
+    - telegraf-docker
+    - observability
+- name: Deploy GitLab
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - gitlab/gitlab-omnibus
+  tags:
+    - gitlab
+    - omnibus
+- name: Deploy GitLab Runner
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - gitlab/gitlab-runner
+  tags:
+    - gitlab
+    - runner
+- name: Deploy Jitsi
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - jitsi
+  tags:
+    - jitsi
+- name: Deploy Confluence
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - confluence
+  tags:
+    - confluence
+- name: Deploy Jira
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - jira
+  tags:
+    - jira
+- name: Setup System Role
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - setup/system-setup
+  tags:
+    - system-setup
+- name: Install and configure kubectl
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - kubectl
+  tags:
+    - kubectl
+- name: Install and configure kind
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - kind
+  tags:
+    - kind
+- name: Install and configure minikube
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - minikube
+  tags:
+    - minikube
+- name: Install, configure, and create k3d cluster
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - k3d
+  tags:
+    - k3d
 
 - name: bootstrap and setup Linux servers
   hosts: all
@@ -128,25 +125,25 @@
   tags:
     - server-setup
 
-# - name: Apply Linux hardening
-#   hosts: all
-#   gather_facts: true
-#   become: true
-#   serial: 1
-#   roles:
-#     - linux-hardening
-
-# - name: Install ans Configure Docker
-#   hosts: all
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - docker
-
-# - name: Harden standalone Proxmox hosts
-#   hosts: pve
-#   gather_facts: false
-#   become: true
-#   serial: 1
-#   roles:
-#     - proxmox-hardening
+- name: Apply Linux hardening
+  hosts: all
+  gather_facts: true
+  become: true
+  serial: 1
+  roles:
+    - linux-hardening
+- name: Install ans Configure Docker
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - docker
+  tags:
+    - docker
+- name: Harden standalone Proxmox hosts
+  hosts: all
+  gather_facts: false
+  become: true
+  serial: 1
+  roles:
+    - proxmox-hardening
