@@ -34,7 +34,7 @@
     - "{{ jira_docker_private_network }}"
   tags:
     - preparing
-    - docker
+    - docker-network
 
 - name: Create Jira service directories
   ansible.builtin.file:
