@@ -1,0 +1,57 @@
+networks:
+  prinet:
+    name: ${PRIVATE_NETWORK}
+    external: true
+
+services:
+  garage:
+    image: dxflrs/garage:${GARAGE_IMAGE_TAG}
+    container_name: ${GARAGE_CONTAINER_NAME}
+    security_opt:
+      - "no-new-privileges:true"
+    ports:
+      - "${GARAGE_BIND_HOST}:${GARAGE_S3_API_PORT}:3900" # S3 API
+      - "${GARAGE_BIND_HOST}:${GARAGE_S3_WEB_PORT}:3902" # S3 static website
+      - "${GARAGE_BIND_HOST}:${GARAGE_ADMIN_PORT}:3903" # Admin API + metrics
+    environment:
+      - RUST_LOG=garage=info
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - ./secrets:/etc/garage/secrets:ro
+      - ./meta:/var/lib/garage/meta
+      - ./data:/var/lib/garage/data
+    networks:
+      - prinet
+    restart: ${GARAGE_RESTART_POLICY}
+    healthcheck:
+      # the image is FROM scratch (no shell/curl), so use the garage binary itself
+      test: ["CMD", "/garage", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  garage-webui:
+    image: khairul169/garage-webui:${GARAGE_WEBUI_IMAGE_TAG}
+    container_name: ${GARAGE_WEBUI_CONTAINER_NAME}
+    profiles:
+      - webui # enabled through COMPOSE_PROFILES in .env
+    security_opt:
+      - "no-new-privileges:true"
+    ports:
+      - "${GARAGE_WEBUI_BIND_HOST}:${GARAGE_WEBUI_PORT}:3909"
+    environment:
+      - CONFIG_PATH=/etc/garage.toml
+      - API_BASE_URL=http://garage:3903
+      - API_ADMIN_KEY=${GARAGE_WEBUI_ADMIN_KEY}
+      - S3_ENDPOINT_URL=http://garage:3900
+      - S3_REGION=${GARAGE_S3_REGION}
+      - AUTH_USER_PASS=${GARAGE_WEBUI_AUTH_USER_PASS}
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+    networks:
+      - prinet
+    depends_on:
+      garage:
+        condition: service_healthy
+    restart: ${GARAGE_RESTART_POLICY}

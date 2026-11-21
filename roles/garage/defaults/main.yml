@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: MIT-0
+---
+# defaults file for garage
+
+# global
+project_dir: /opt/services
+service_dir: "{{ project_dir }}/garage"
+docker_networks:
+  - prinet # private network
+  - pubnet # public network
+
+# container
+garage_image_tag: v2.5.0
+garage_container_name: garage
+garage_restart_policy: unless-stopped
+
+# Host address the published ports bind to.
+# Keep 127.0.0.1 when a reverse proxy (traefik/nginx) fronts Garage; use 0.0.0.0 to expose directly.
+garage_bind_host: 127.0.0.1
+garage_s3_api_port: 3900
+garage_s3_web_port: 3902
+garage_admin_port: 3903
+
+# garage.toml
+garage_db_engine: lmdb # lmdb | sqlite
+garage_replication_factor: 1
+garage_consistency_mode: consistent # consistent | degraded | dangerous
+garage_rpc_public_addr: "127.0.0.1:3901" # set to <host_ip>:3901 when adding more nodes
+garage_metadata_auto_snapshot_interval: 6h
+garage_compression_level: 4
+garage_s3_region: garage
+garage_s3_root_domain: ".s3.garage.localhost"
+garage_web_root_domain: ".web.garage.localhost"
+garage_web_index: index.html
+
+# Secrets. Leave empty to auto-generate once on the host (kept in {{ service_dir }}/secrets).
+# Set them (ideally from ansible-vault) to pin explicit values.
+garage_rpc_secret: "" # 64 hex chars (openssl rand -hex 32)
+garage_admin_token: ""
+garage_metrics_token: ""
+
+# Web UI (khairul169/garage-webui), runs next to Garage on the private network
+garage_webui_enabled: true
+garage_webui_image_tag: "1.1.0"
+garage_webui_container_name: garage-webui
+garage_webui_bind_host: "{{ garage_bind_host }}"
+garage_webui_port: 3909
+# Basic auth, "user:<bcrypt hash>" — generate with: htpasswd -nbBC 10 admin 'S3cret'
+# Required unless the UI is bound to 127.0.0.1. Keep it in ansible-vault.
+garage_webui_auth_user_pass: ""
+
+# init.yml — single-node cluster layout
+garage_layout_zone: dc1
+garage_layout_capacity: 100G
+
+# Buckets to create
+garage_buckets: []
+#  - mybucket
+
+# Access keys to create and their bucket grants.
+# Credentials of newly created keys are written to {{ service_dir }}/secrets/keys/<name>.txt (mode 0600).
+garage_keys: []
+#  - name: myapp-key
+#    buckets:
+#      - name: mybucket
+#        permissions: [read, write, owner]
