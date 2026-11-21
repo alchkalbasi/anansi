@@ -40,7 +40,7 @@
     - prinet
   tags:
     - preparing
-    - docker
+    - docker-network
 
 - name: Creates directory
   ansible.builtin.file:
