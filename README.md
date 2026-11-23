@@ -20,7 +20,8 @@ networking, observability, and collaboration platforms.
 - **Proxmox VE:** opt-in [standalone PVE 9 hardening](roles/proxmox-hardening/README.md)
   with a dedicated `proxmox-hardening.yml` playbook.
 - **Applications and services:** Jitsi, Confluence, Mattermost, NetBox,
-  3x-ui, MinIO, RustFS, and web services.
+  3x-ui, MinIO, RustFS, Garage, [Vaultwarden](roles/vaultwarden/README.md)
+  (company password manager), and web services.
 - **Databases:** MySQL and PostgreSQL master/slave replication roles.
 - **DevOps platforms:** GitLab, GitLab Runner, and the ELK stack.
 - **Kubernetes tooling:** `kubectl` installation, shell integration, and

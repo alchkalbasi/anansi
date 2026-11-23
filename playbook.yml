@@ -6,6 +6,14 @@
     - garage
   tags:
     - garage
+- name: Deploy Vaultwarden
+  hosts: all
+  gather_facts: true
+  become: true
+  roles:
+    - vaultwarden
+  tags:
+    - vaultwarden
 - name: Deploy RustFS
   hosts: all
   gather_facts: true

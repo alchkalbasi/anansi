@@ -1,0 +1,27 @@
+---
+# vars file for vaultwarden
+
+vaultwarden_hostname: "{{ vaultwarden_domain | urlsplit('hostname') }}"
+
+vaultwarden_push_uris:
+  us:
+    relay: https://push.bitwarden.com
+    identity: https://identity.bitwarden.com
+  eu:
+    relay: https://api.bitwarden.eu
+    identity: https://identity.bitwarden.eu
+
+# Secret files (host side). An explicit value always wins, otherwise one is generated once.
+vaultwarden_secret_files:
+  - name: postgres_password
+    value: "{{ vaultwarden_postgres_password }}"
+  - name: admin_token
+    value: "{{ vaultwarden_admin_token }}"
+
+# Values written single-quoted into vaultwarden.env, so they must not contain a single quote
+vaultwarden_quoted_values:
+  - "{{ vaultwarden_admin_token }}"
+  - "{{ vaultwarden_postgres_password }}"
+  - "{{ vaultwarden_smtp_password }}"
+  - "{{ vaultwarden_sso_client_secret }}"
+  - "{{ vaultwarden_push_installation_key }}"

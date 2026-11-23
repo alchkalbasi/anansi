@@ -1,0 +1,55 @@
+# Explicit secrets always win; otherwise a random one is written only if the file
+# does not exist yet (force: false), so it stays stable across runs.
+- name: Write Vaultwarden secret files
+  ansible.builtin.copy:
+    dest: "{{ service_dir }}/secrets/{{ item.name }}"
+    content: >-
+      {{ item.value if item.value | length > 0
+         else lookup('ansible.builtin.password', '/dev/null', chars=['ascii_letters', 'digits'], length=48) }}
+    force: "{{ item.value | length > 0 }}"
+    mode: "0600"
+  loop: "{{ vaultwarden_secret_files }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+  tags:
+    - secrets
+
+- name: Read the secret files
+  ansible.builtin.slurp:
+    src: "{{ service_dir }}/secrets/{{ item.name }}"
+  loop: "{{ vaultwarden_secret_files }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: _vaultwarden_secret_reads
+  no_log: true
+  tags:
+    - env-file
+
+- name: Expose the secrets to the templates
+  ansible.builtin.set_fact:
+    _vaultwarden_secrets: >-
+      {{ dict(_vaultwarden_secret_reads.results
+              | map(attribute='item.name')
+              | zip(_vaultwarden_secret_reads.results
+                    | map(attribute='content') | map('b64decode') | map('trim'))) }}
+  no_log: true
+  tags:
+    - env-file
+
+# compose recreates the containers on the next `up` when either file changes
+- name: Template the compose .env file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ service_dir }}/.env"
+    mode: "0600"
+  tags:
+    - env-file
+
+- name: Template the Vaultwarden settings file
+  ansible.builtin.template:
+    src: vaultwarden.env.j2
+    dest: "{{ service_dir }}/vaultwarden.env"
+    mode: "0600"
+  tags:
+    - env-file

@@ -1,0 +1,34 @@
+- name: Create docker external networks with name
+  community.docker.docker_network:
+    name: "{{ item }}"
+    driver_options:
+      com.docker.network.bridge.name: "{{ item }}"
+  loop: "{{ docker_networks }}"
+  tags:
+    - docker-networks
+
+- name: Pull images for project
+  community.docker.docker_compose_v2_pull:
+    project_src: "{{ service_dir }}"
+    policy: missing # pull only if the image doesn't exist locally
+  tags:
+    - pull
+
+- name: Deploy Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ service_dir }}"
+    wait: true # until postgres and vaultwarden report healthy
+    wait_timeout: 300
+  tags:
+    - deploy
+
+- name: Check that Vaultwarden answers
+  ansible.builtin.uri:
+    url: "http://{{ '127.0.0.1' if vaultwarden_bind_host == '0.0.0.0' else vaultwarden_bind_host }}:{{ vaultwarden_http_port }}/alive"
+    status_code: 200
+  register: _vaultwarden_alive
+  until: _vaultwarden_alive.status == 200
+  retries: 10
+  delay: 3
+  tags:
+    - deploy
